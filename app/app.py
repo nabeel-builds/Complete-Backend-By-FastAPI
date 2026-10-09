@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from app.routes import todo
+from app.routes import todo, auth
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.config.app_config import getAppConfig
@@ -8,7 +8,8 @@ from app.config.app_config import getAppConfig
 app = FastAPI()
 
 # include all routes here
-app.include_router(todo.router)
+app.include_router(todo.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
