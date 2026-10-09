@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from type import QueryParams
 from app.routes import todo
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from app.config.app_config import getAppConfig
 
 app = FastAPI()
 
@@ -17,11 +17,16 @@ async def validation_exception_handler(request, exc):
         print(f"The Error is: {error}")
         errors[error["loc"][-1]] = error["msg"]
 
-    request JSONResponse(
+    return JSONResponse(
         {"message": "Validation Error", "errors": errors}, status_code=422
     )
 
 @app.get("/")
-def root(query: Annotated[QueryParams, Depends()]):
-    return {"Message":"Hello World", "params": query}
+def root():
+    config = getAppConfig()
+    return {"message":"Hello World", 
+            "app_name": config.app_name,
+            "app_env": config.app_env,
+            "database_url": config.database_url,
+    }
 
