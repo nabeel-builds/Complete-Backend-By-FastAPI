@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
-from app.models.auth import Register
+from app.models.auth import Register, Login
 from sqlalchemy.orm import Session
 from typing import Annotated
 from app.db.db import get_db
 from app.db.schemas.user_schema import UserSchema
 from fastapi.responses import JSONResponse
-from app.helper import hashPassword
+from app.helper import hashPassword, verifyPassword, createAccessToken
 
 router = APIRouter(prefix="/auth")
 
@@ -20,10 +20,30 @@ def register(data: Register, db:Annotated[Session, Depends(get_db)]):
     new_user = UserSchema(
         name = data.name,
         email = data.email,
-        password = hashPassword(data.password)
+        hashed_password = hashPassword(data.password)
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
     return {"message": "User registered successfully", "user": new_user}
+
+
+@router.post("/login")
+def login(data:Login, db:Annotated[Session, Depends(get_db)]):
+    user = db.query(UserSchema).filter(UserSchema.email == data.email).first()
+    if not user or not verifyPassword(data.password, user.hashed_password):
+        return JSONResponse(
+            {"message": "Inavlid email or password"}, status_code=401
+        )
+
+    payload = {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email
+    }
+
+    token = createAccessToken(payload)
+    payload["access_token"] = "Bearer"+token
+    
+    return {"message": "Login Successful", "data": payload}

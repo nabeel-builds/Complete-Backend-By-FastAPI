@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 from app.db.db import get_db
 from app.db.schemas.todo_schema import TodoSchema
 from sqlalchemy import select
+from app.dependencies import authenticate_user
 
 router = APIRouter(
-    prefix="/todo"
+    prefix="/todo",
+    dependencies=[Depends(authenticate_user)]
 )
 
 @router.get("/")
